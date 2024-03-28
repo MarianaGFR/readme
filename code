@@ -1,0 +1,75 @@
+⦁	Código-fonte:
+
+
+#include <LiquidCrystal.h>
+#include <DHT.h>
+#include <SoftwareSerial.h>
+
+SoftwareSerial mySerial(2, 3); // RX, TX
+
+#define DHT_PIN A5
+#define DHTTYPE DHT11
+
+unsigned long previousMillis = 0; // armazenará a última vez
+const long interval = 1000;       // intervalo de 1 segundo
+
+#define RS 12
+#define EN 11
+#define D4  4
+#define D5  5
+#define D6  6
+#define D7  7
+
+#define INTERVALO 3000 // Define o intervalo de tempo (3 segundos) entre cada transmissão de dados para o módulo Bluetooth.
+
+LiquidCrystal lcd(RS, EN, D4, D5, D6, D7);
+DHT dht(DHT_PIN, DHTTYPE);
+
+void setup() {
+Serial.begin(9600);
+mySerial.begin(9600);
+Serial.println("INICIANDO SISTEMA");
+dht.begin();
+lcd.begin(16, 2);
+lcd.clear();
+lcd.setCursor(2, 0);
+lcd.print("  LOADING...");
+delay(3000);
+}
+
+void loop() {
+float h = dht.readHumidity();
+float t = dht.readTemperature();
+
+if (isnan(h) || isnan(t)) {
+Serial.println(F("Falha na leitura do sensor DHT"));
+}
+else
+{
+Serial.print("Temperatura (C): ");
+Serial.print(t);
+Serial.print(" Umidade (%RH): ");
+Serial.println(h);
+lcd.clear();
+lcd.setCursor(2, 0);
+lcd.print("MONITORANDO");
+lcd.setCursor(0, 1);
+lcd.print(t);
+lcd.print("C  ");
+lcd.print(h);
+lcd.print("%U  ");
+
+unsigned long currentMillis = millis();
+if (currentMillis - previousMillis >= interval)
+{
+previousMillis = currentMillis;
+
+String str1 = String(t, 2);
+String str2 = String(h, 2);
+
+String my_String = "{'data':[{'data1':'" + str1 + "','data2':'" + str2 + "'}]}";
+mySerial.print(my_String);
+}
+}
+delay(INTERVALO);
+}
